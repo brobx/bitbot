@@ -17,3 +17,8 @@ Bot.on('message', (msg) => {
   TelegramSave.parseRequestToChat(msg, chatId)
 // bot.sendMessage(chatId, 'Received your message');
 });
+
+Bot.on('callback_query', (callback_query) => {
+    console.log(callback_query)
+  }
+);
