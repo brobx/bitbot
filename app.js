@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const index = require('./routes/index');
 
 const app = express();
-// const mongoose_connect = require('./modules/mongoose-connect');
+const mongoose_connect = require('./modules/mongoose-connect');
 const telegramListener = require('./listeners/telegramListener');
 const bitmexListener = require('./listeners/bitmexListener');
 

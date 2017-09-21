@@ -1,5 +1,6 @@
 const Bot = require('../modules/telegram-connect');
 const BitMexPrices = require('../models/bitmexPrices').BitMexPrices;
+const Alerts = require('./alerts').Alerts;
 
 const TelegramSave = function (data) {
   this.data = data;
@@ -25,6 +26,7 @@ TelegramSave.parseRequestToChat = function (userMessage, chatId) {
         '<b>markPrice</b>\n'+
         'just enter "get price {param you need}"';
       mode = {parse_mode:'HTML'};
+      sendMessagetelegram(textReturn, userMessage.chat.id, mode);
       break;
     case /get price (.+)/.test(userMessage.text):
       let paramsAllForPrice = userMessage.text.split(' '),
@@ -36,6 +38,22 @@ TelegramSave.parseRequestToChat = function (userMessage, chatId) {
         textReturn = 'Sorry, no such parameter'
       }
       mode = {parse_mode:'HTML'};
+      sendMessagetelegram(textReturn, userMessage.chat.id, mode);
+      break;
+    case /min (.+)/.test(userMessage.text):
+      let pricesPar = userMessage.text.split(' '),
+        priceForAlert = pricesPar[pricesPar.length - 1];
+      console.log(userMessage)
+      Alerts.saveSimpleAlert(userMessage.chat.id, priceForAlert, 'minPrice')
+        .then(function (result) {
+          console.log(result)
+          textReturn = 'Alert saved';
+          sendMessagetelegram(textReturn, userMessage.chat.id, mode);
+        })
+        .catch(function (err) {
+          textReturn = 'Sorry, cannot save alert.';
+          sendMessagetelegram(textReturn, userMessage.chat.id, mode);
+        })
       break;
     case /commands/.test(userMessage.text):
       mode = {reply_markup: JSON.stringify({
@@ -47,13 +65,34 @@ TelegramSave.parseRequestToChat = function (userMessage, chatId) {
           [{ text: 'Show active alerts', callback_data: '5' }]
         ]
       })}
-      textReturn = 'This is possible commands that you can use with this buttons';
+      textReturn = 'This is a full list of commands to operate the bot';
+      sendMessagetelegram(textReturn, userMessage.chat.id, mode);
       break;
     default:
-      textReturn = 'Sorry, Im still learning and cannot response you now, but be sure that Ill help you soon!)'
+      textReturn = 'Sorry, Im still learning and cannot response you now, but be sure that Ill help you soon!)';
+      sendMessagetelegram(textReturn, userMessage.chat.id, mode);
   }
-  sendMessagetelegram(textReturn, userMessage.chat.id, mode);
 }
+
+TelegramSave.callbackEvent = function (callback_data) {
+  let textReturn = '';
+  let mode = {};
+  switch (callback_data.data){
+    case '1':
+      let price = BitMexPrices.getPrice('lastPrice');
+      textReturn = 'Last price: '+ price;
+      break;
+    case '2':
+      textReturn = 'Enter minimum price when I need to notify you.\n'+
+      'please enter <b>min</b> <em>PRICE</em>';
+      mode = {parse_mode:'HTML'};
+      break;
+  }
+
+  sendMessagetelegram(textReturn, callback_data.message.chat.id, mode);
+}
+
+
 
 function sendMessagetelegram (text, chatId, mode) {
   Bot.sendMessage(chatId, text, mode);

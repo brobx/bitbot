@@ -20,5 +20,6 @@ Bot.on('message', (msg) => {
 
 Bot.on('callback_query', (callback_query) => {
     console.log(callback_query)
+  TelegramSave.callbackEvent(callback_query)
   }
 );
